@@ -1,0 +1,116 @@
+plugins {
+    id 'maven-publish'
+    id 'org.jetbrains.dokka' version "2.0.0"
+    id 'org.jreleaser' version '1.18.0'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.21'
+    id "io.ktor.plugin" version "3.1.2"
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'org.springframework.boot' version '3.2.1'
+}
+
+group = "io.github.mralex1810"
+version = "1.0.0"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "io.ktor:ktor-client-core"
+    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
+
+
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit5'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+
+tasks.register('dokkaJavadocJar', Jar.class) {
+    dependsOn(dokkaJavadoc)
+    from(dokkaJavadoc)
+    archiveClassifier.set("javadoc")
+}
+
+publishing {
+    publications {
+        library(MavenPublication) {
+            from components.java
+            artifact kotlinSourcesJar
+            artifact tasks.dokkaJavadocJar
+
+            pom {
+                name = "Gomafia Library"
+                description = "Library for connecting to Gomafia  site"
+                url = "https://github.com/Vyasma-Mafia/gomafia-library"
+                licenses {
+                    license {
+                        name = 'Apache-2.0'
+                        url = 'https://spdx.org/licenses/Apache-2.0.html'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'mralex1810'
+                        name = 'Alexey Chulkov'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:https://github.com/Vyasma-Mafia/gomafia-library.git'
+                    developerConnection = 'scm:git:ssh://github.com/Vyasma-Mafia/gomafia-library.git'
+                    url = 'https://github.com/Vyasma-Mafia/gomafia-library'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            setUrl(layout.buildDirectory.dir("staging-deploy"))
+        }
+    }
+}
+
+jreleaser {
+    release {
+        github {
+            skipRelease = true
+            skipTag = true
+        }
+    }
+    signing {
+        active = 'ALWAYS'
+        armored = true
+    }
+    deploy {
+        maven {
+            mavenCentral {
+                sonatype {
+                    active = 'ALWAYS'
+                    url = 'https://central.sonatype.com/api/v1/publisher'
+                    stagingRepository('build/staging-deploy')
+                    sign = true
+                    checksums = true
+                    sourceJar = true
+                    javadocJar = true
+                }
+            }
+        }
+    }
+
+}
+
+jar {
+    enabled = true
+    archiveClassifier = ''
+}
+
+kotlinSourcesJar {
+    enabled = true
+}
+
+kotlin {
+    jvmToolchain(17)
+}
