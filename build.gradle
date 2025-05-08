@@ -111,6 +111,22 @@ kotlinSourcesJar {
     enabled = true
 }
 
+bootJar {
+    enabled = false
+}
+
+tasks.bootDistZip.dependsOn(tasks.jar)
+tasks.bootDistTar.dependsOn(tasks.jar)
+tasks.bootStartScripts.dependsOn(tasks.jar)
+
+shadowJar {
+    enabled = false
+}
+
+startShadowScripts {
+    enabled = false
+}
+
 kotlin {
     jvmToolchain(17)
 }
